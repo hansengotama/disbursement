@@ -6,6 +6,7 @@ import (
 	"errors"
 	"github.com/google/uuid"
 	"github.com/hansengotama/disbursement/internal/lib/postgres"
+	"time"
 )
 
 type InsertDisbursementAccountParam struct {
@@ -38,7 +39,10 @@ type IDisbursementAccountRepository interface {
 type DisbursementAccountDB struct{}
 
 func (r DisbursementAccountDB) Insert(param InsertDisbursementAccountParam) error {
-	_, err := param.Executor.ExecContext(param.Context, "INSERT INTO disbursement_accounts(guid, user_id, payment_provider_guid, name, number) VALUES ($1, $2, $3, $4, $5)", param.GUID, param.UserID, param.PaymentProviderGUID, param.Name, param.Number)
+	ctx, cancel := context.WithTimeout(param.Context, 2*time.Minute)
+	defer cancel()
+
+	_, err := param.Executor.ExecContext(ctx, "INSERT INTO disbursement_accounts(guid, user_id, payment_provider_guid, name, number) VALUES ($1, $2, $3, $4, $5)", param.GUID, param.UserID, param.PaymentProviderGUID, param.Name, param.Number)
 	if err != nil {
 		// logging
 		return err
@@ -48,7 +52,10 @@ func (r DisbursementAccountDB) Insert(param InsertDisbursementAccountParam) erro
 }
 
 func (r DisbursementAccountDB) GetByGUID(param GetByGUIDParam) (*GetByGUIDParamRes, error) {
-	row := param.Executor.QueryRowContext(param.Context, "SELECT payment_provider_guid, name, number from disbursement_accounts WHERE guid = $1", param.GUID)
+	ctx, cancel := context.WithTimeout(param.Context, 2*time.Minute)
+	defer cancel()
+
+	row := param.Executor.QueryRowContext(ctx, "SELECT payment_provider_guid, name, number from disbursement_accounts WHERE guid = $1", param.GUID)
 	if row.Err() != nil {
 		// logging
 		return nil, row.Err()

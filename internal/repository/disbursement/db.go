@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/google/uuid"
 	"github.com/hansengotama/disbursement/internal/lib/postgres"
+	"time"
 )
 
 type InsertDisbursementParam struct {
@@ -27,7 +28,10 @@ type IDisbursementRepository interface {
 type DisbursementDB struct{}
 
 func (r DisbursementDB) Insert(param InsertDisbursementParam) error {
-	_, err := param.Executor.ExecContext(param.Context, "INSERT INTO disbursements(user_id, disbursement_account_guid, payment_provider_guid, account_name, account_number, admin_fee, amount, amount_with_fee, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)", param.UserID, param.DisbursementAccountGUID, param.PaymentProviderGUID, param.AccountName, param.AccountNumber, param.AdminFee, param.Amount, param.AmountWithFee, param.Status)
+	ctx, cancel := context.WithTimeout(param.Context, 2*time.Minute)
+	defer cancel()
+
+	_, err := param.Executor.ExecContext(ctx, "INSERT INTO disbursements(user_id, disbursement_account_guid, payment_provider_guid, account_name, account_number, admin_fee, amount, amount_with_fee, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)", param.UserID, param.DisbursementAccountGUID, param.PaymentProviderGUID, param.AccountName, param.AccountNumber, param.AdminFee, param.Amount, param.AmountWithFee, param.Status)
 	if err != nil {
 		// logging
 		return err

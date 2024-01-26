@@ -37,7 +37,10 @@ type IWalletRepository interface {
 type WalletDB struct{}
 
 func (r WalletDB) Insert(param InsertWalletParam) error {
-	_, err := param.Executor.ExecContext(param.Context, "INSERT INTO wallets(user_id, balance) VALUES ($1, $2)", param.UserID, param.Balance)
+	ctx, cancel := context.WithTimeout(param.Context, 2*time.Minute)
+	defer cancel()
+
+	_, err := param.Executor.ExecContext(ctx, "INSERT INTO wallets(user_id, balance) VALUES ($1, $2)", param.UserID, param.Balance)
 	if err != nil {
 		// logging
 		return err
@@ -47,7 +50,10 @@ func (r WalletDB) Insert(param InsertWalletParam) error {
 }
 
 func (r WalletDB) GetWalletBalanceByUserID(param GetWalletBalanceByUserIDParam) (float64, error) {
-	row := param.Executor.QueryRowContext(param.Context, "SELECT balance from wallets WHERE user_id = $1", param.UserID)
+	ctx, cancel := context.WithTimeout(param.Context, 2*time.Minute)
+	defer cancel()
+
+	row := param.Executor.QueryRowContext(ctx, "SELECT balance from wallets WHERE user_id = $1", param.UserID)
 	if row.Err() != nil {
 		// logging
 		return 0, row.Err()
@@ -64,7 +70,10 @@ func (r WalletDB) GetWalletBalanceByUserID(param GetWalletBalanceByUserIDParam) 
 }
 
 func (r WalletDB) UpdateWalletBalanceByUserID(param UpdateWalletBalanceByUserIDParam) error {
-	_, err := param.Executor.ExecContext(param.Context, "UPDATE wallets SET balance = $1, updated_at = $2 WHERE user_id = $3", param.Balance, time.Now(), param.UserID)
+	ctx, cancel := context.WithTimeout(param.Context, 2*time.Minute)
+	defer cancel()
+
+	_, err := param.Executor.ExecContext(ctx, "UPDATE wallets SET balance = $1, updated_at = $2 WHERE user_id = $3", param.Balance, time.Now(), param.UserID)
 	if err != nil {
 		// logging
 		return err

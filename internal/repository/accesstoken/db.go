@@ -36,7 +36,10 @@ type IAccessTokenRepository interface {
 type AccessTokenDB struct{}
 
 func (r AccessTokenDB) Insert(param InsertAccessTokenParam) error {
-	_, err := param.Executor.ExecContext(param.Context, "INSERT INTO access_tokens(token, user_id, expiration_time) VALUES ($1, $2, $3)", param.Token, param.UserID, param.ExpirationTime)
+	ctx, cancel := context.WithTimeout(param.Context, 2*time.Minute)
+	defer cancel()
+
+	_, err := param.Executor.ExecContext(ctx, "INSERT INTO access_tokens(token, user_id, expiration_time) VALUES ($1, $2, $3)", param.Token, param.UserID, param.ExpirationTime)
 	if err != nil {
 		// logging
 		return err
@@ -46,7 +49,10 @@ func (r AccessTokenDB) Insert(param InsertAccessTokenParam) error {
 }
 
 func (r AccessTokenDB) GetAccessToken(param GetAccessTokenParam) (*GetAccessTokenResponse, error) {
-	row := param.Executor.QueryRowContext(param.Context, "SELECT token, user_id, expiration_time from access_tokens WHERE token = $1", param.Token)
+	ctx, cancel := context.WithTimeout(param.Context, 2*time.Minute)
+	defer cancel()
+
+	row := param.Executor.QueryRowContext(ctx, "SELECT token, user_id, expiration_time from access_tokens WHERE token = $1", param.Token)
 	if row.Err() != nil {
 		// logging
 		return nil, row.Err()
