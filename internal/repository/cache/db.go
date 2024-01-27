@@ -20,12 +20,8 @@ type SetParam struct {
 }
 
 type ICacheRepository interface {
-	Get(param GetParam) Response
-	Set(param SetParam) Response
-}
-
-type Response interface {
-	Result() (string, error)
+	Get(param GetParam) (string, error)
+	Set(param SetParam) (string, error)
 }
 
 type CacheRedis struct {
@@ -38,10 +34,10 @@ func NewCacheRedis() ICacheRepository {
 	}
 }
 
-func (r CacheRedis) Get(param GetParam) Response {
-	return r.RedisConn.Get(param.Context, param.Key)
+func (r CacheRedis) Get(param GetParam) (string, error) {
+	return r.RedisConn.Get(param.Context, param.Key).Result()
 }
 
-func (r CacheRedis) Set(param SetParam) Response {
-	return r.RedisConn.Set(param.Context, param.Key, param.Value, param.TTL)
+func (r CacheRedis) Set(param SetParam) (string, error) {
+	return r.RedisConn.Set(param.Context, param.Key, param.Value, param.TTL).Result()
 }

@@ -13,43 +13,59 @@ type ICacheRepository struct {
 }
 
 // Get provides a mock function with given fields: param
-func (_m *ICacheRepository) Get(param cacherepo.GetParam) cacherepo.Response {
+func (_m *ICacheRepository) Get(param cacherepo.GetParam) (string, error) {
 	ret := _m.Called(param)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Get")
 	}
 
-	var r0 cacherepo.Response
-	if rf, ok := ret.Get(0).(func(cacherepo.GetParam) cacherepo.Response); ok {
+	var r0 string
+	var r1 error
+	if rf, ok := ret.Get(0).(func(cacherepo.GetParam) (string, error)); ok {
+		return rf(param)
+	}
+	if rf, ok := ret.Get(0).(func(cacherepo.GetParam) string); ok {
 		r0 = rf(param)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(cacherepo.Response)
-		}
+		r0 = ret.Get(0).(string)
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(cacherepo.GetParam) error); ok {
+		r1 = rf(param)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // Set provides a mock function with given fields: param
-func (_m *ICacheRepository) Set(param cacherepo.SetParam) cacherepo.Response {
+func (_m *ICacheRepository) Set(param cacherepo.SetParam) (string, error) {
 	ret := _m.Called(param)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Set")
 	}
 
-	var r0 cacherepo.Response
-	if rf, ok := ret.Get(0).(func(cacherepo.SetParam) cacherepo.Response); ok {
+	var r0 string
+	var r1 error
+	if rf, ok := ret.Get(0).(func(cacherepo.SetParam) (string, error)); ok {
+		return rf(param)
+	}
+	if rf, ok := ret.Get(0).(func(cacherepo.SetParam) string); ok {
 		r0 = rf(param)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(cacherepo.Response)
-		}
+		r0 = ret.Get(0).(string)
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(cacherepo.SetParam) error); ok {
+		r1 = rf(param)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // NewICacheRepository creates a new instance of ICacheRepository. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

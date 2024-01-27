@@ -49,10 +49,10 @@ func (s DisbursementService) RequestDisbursement(param RequestDisbursementParam)
 	ongoingRequestDisbursement, _ := s.Dependency.CacheRepository.Get(cacherepo.GetParam{
 		Context: param.Context,
 		Key:     ongoingRequestDisbursementKey,
-	}).Result()
+	})
 
 	if ongoingRequestDisbursement == "true" {
-		return errors.New("only one ongoing request for disbursement is allowed. please try again later.")
+		return errors.New("only one ongoing request for disbursement is allowed. please try again later")
 	}
 
 	s.Dependency.CacheRepository.Set(cacherepo.SetParam{
@@ -93,11 +93,14 @@ func (s DisbursementService) RequestDisbursement(param RequestDisbursementParam)
 		Executor: conn,
 		GUID:     disbursementAccount.PaymentProviderGUID,
 	})
+	if err != nil {
+		return errors.New("error on get provider admin fee")
+	}
 
 	amountWithFee := param.Amount + adminFee
 	remainingBalance := currentBalance - amountWithFee
 	if remainingBalance < 0 {
-		return errors.New("insufficient funds: cannot disburse the specified amount")
+		return errors.New("insufficient funds. Please ensure your account balance is sufficient")
 	}
 
 	tx, err := conn.Begin()
