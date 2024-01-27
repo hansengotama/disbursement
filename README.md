@@ -108,5 +108,7 @@ To address the study case, certain criteria have been established:
 }'
 ```
 
-# Unit Test
-
+# Unit Test (Service Layer)
+```bash
+go test ./internal/service/disbursement --cover
+```
