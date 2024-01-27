@@ -45,17 +45,10 @@ func NewDisbursementService(dependency Dependency) IDisbursementService {
 }
 
 func (s DisbursementService) RequestDisbursement(param RequestDisbursementParam) error {
-	conn := postgres.GetConnection()
-	tx, err := conn.Begin()
-	if err != nil {
-		return err
-	}
-
-	key := fmt.Sprintf("ongoing_request_disbursement_with_user_id_%v", param.UserID)
-
+	ongoingRequestDisbursementKey := fmt.Sprintf("ongoing_request_disbursement_with_user_id_%v", param.UserID)
 	ongoingRequestDisbursement, _ := s.Dependency.CacheRepository.Get(cacherepo.GetParam{
 		Context: param.Context,
-		Key:     key,
+		Key:     ongoingRequestDisbursementKey,
 	}).Result()
 
 	if ongoingRequestDisbursement == "true" {
@@ -64,41 +57,40 @@ func (s DisbursementService) RequestDisbursement(param RequestDisbursementParam)
 
 	s.Dependency.CacheRepository.Set(cacherepo.SetParam{
 		Context: param.Context,
-		Key:     key,
+		Key:     ongoingRequestDisbursementKey,
 		Value:   "true",
 		TTL:     5 * time.Minute,
 	})
 
 	defer s.Dependency.CacheRepository.Set(cacherepo.SetParam{
 		Context: param.Context,
-		Key:     key,
+		Key:     ongoingRequestDisbursementKey,
 		Value:   "false",
 		TTL:     5 * time.Minute,
 	})
 
+	conn := postgres.GetConnection()
 	currentBalance, err := s.Dependency.WalletRepository.GetWalletBalanceByUserID(walletrepo.GetWalletBalanceByUserIDParam{
 		Context:  param.Context,
-		Executor: tx,
+		Executor: conn,
 		UserID:   param.UserID,
 	})
 	if err != nil {
-		tx.Rollback()
 		return errors.New("error on get wallet balance")
 	}
 
 	disbursementAccount, err := s.Dependency.DisbursementAccountRepository.GetByGUID(disbursementaccountrepo.GetByGUIDParam{
 		Context:  param.Context,
-		Executor: tx,
+		Executor: conn,
 		GUID:     param.DisbursementAccountGUID,
 	})
 	if err != nil {
-		tx.Rollback()
 		return errors.New("error on get disbursement account")
 	}
 
 	adminFee, err := s.Dependency.PaymentProviderRepository.GetAdminFeeByGUID(paymentproviderrepo.GetAdminFeeByGUIDParam{
 		Context:  param.Context,
-		Executor: tx,
+		Executor: conn,
 		GUID:     disbursementAccount.PaymentProviderGUID,
 	})
 
@@ -106,6 +98,11 @@ func (s DisbursementService) RequestDisbursement(param RequestDisbursementParam)
 	remainingBalance := currentBalance - amountWithFee
 	if remainingBalance < 0 {
 		return errors.New("insufficient funds: cannot disburse the specified amount")
+	}
+
+	tx, err := conn.Begin()
+	if err != nil {
+		return err
 	}
 
 	err = s.Dependency.WalletRepository.UpdateWalletBalanceByUserID(walletrepo.UpdateWalletBalanceByUserIDParam{
